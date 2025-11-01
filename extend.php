@@ -15,19 +15,37 @@ use Flarum\Api\Serializer\ForumSerializer;
 use Flarum\Extend;
 use Flarum\Settings\Event\Saved;
 use FoF\Formatting\Listeners\FormatterConfigurator;
+use s9e\TextFormatter\Configurator;
 
 return [
     (new Extend\Frontend('forum'))
         ->css(__DIR__.'/resources/less/forum.less'),
-
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
         ->css(__DIR__.'/resources/less/admin.less'),
-
     new Extend\Locales(__DIR__.'/resources/locale'),
 
+    
     (new Extend\Formatter())
-        ->configure(ConfigureYouTube::class),
+        ->configure(function (Configurator $configurator) {
+            $settings = resolve('flarum.settings');
+
+            foreach (FormatterConfigurator::PLUGINS as $plugin) {
+                $enabled = $settings->get('fof-formatting.plugin.'.strtolower($plugin));
+
+                if ($enabled) {
+                    if ($plugin == 'MediaEmbed') {
+                        
+                        (new \s9e\TextFormatter\Configurator\Bundles\MediaPack())->configure($configurator);
+                    } else {
+                        $configurator->$plugin;
+                    }
+                }
+            }
+
+            
+            (new ConfigureYouTube(resolve('flarum.settings')))($configurator);
+        }),
 
     (new Extend\ApiSerializer(ForumSerializer::class))
         ->attributes(FormatterConfigurator::class),
