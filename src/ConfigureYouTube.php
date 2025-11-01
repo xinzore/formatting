@@ -13,15 +13,14 @@ namespace FoF\Formatting;
 
 use Flarum\Settings\SettingsRepositoryInterface;
 use s9e\TextFormatter\Configurator;
+use s9e\TextFormatter\Configurator\Bundles\MediaPack;
 
 class ConfigureYouTube
 {
-    /** @var SettingsRepositoryInterface */
     protected $settings;
 
-    public function __construct(
-        SettingsRepositoryInterface $settings
-    ) {
+    public function __construct(SettingsRepositoryInterface $settings)
+    {
         $this->settings = $settings;
     }
 
@@ -30,11 +29,21 @@ class ConfigureYouTube
         $mediaEmbedEnabled = (bool) $this->settings->get('fof-formatting.plugin.mediaembed');
 
         if ($mediaEmbedEnabled) {
+            
+            (new MediaPack())->configure($configurator);
+
+            
             $configurator->MediaEmbed->add('youtube');
 
-            $tag = $configurator->tags['YOUTUBE'];
-            $tag->template = str_replace('www.youtube.com', 'www.youtube-nocookie.com', $tag->template);
-            $tag->template = str_replace('allowfullscreen=""', 'allowfullscreen="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"', $tag->template);
+            if (isset($configurator->tags['YOUTUBE'])) {
+                $tag = $configurator->tags['YOUTUBE'];
+                $tag->template = str_replace('www.youtube.com', 'www.youtube-nocookie.com', $tag->template);
+                $tag->template = str_replace(
+                    'allowfullscreen=""',
+                    'allowfullscreen="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"',
+                    $tag->template
+                );
+            }
         }
     }
 }
